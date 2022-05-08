@@ -1,0 +1,45 @@
+Password Manager za sigurno pospremanje zaporki
+
+Kako pokrenuti:
+    -pozicioniranje u direktorij "bin"
+    -pokretanje pomoću "./password_manager [ACTION] [PASSWORD] [ADRESS] [NEW_PASSWORD]"
+
+Funkcionalnosti:
+    -inicijalizacija praznog repozitorija zaporki uz postavljanje lozinke
+    -pospremanje lozinke za određenu adresu
+    -dohvaćanje lozinke za određenu adresu
+    -automatsko kopiranje dohvaćene lozinke na clipboard uz alat copyq
+
+Način rada:
+    -zastavica init:
+        -inicijalizacija prazne datoteke za pohranu lozinki te datoteke za pohranu pripadajućih javnih podataka
+        -generiranje PBKDF2 sažetaka sa slučajno generiranim nizom od 32 bajtova (salt) lozinke koju je korisnik specificirao te obje informacije pohrani u auth.bin
+    
+    -zastavica put
+        -autentifikacija lozinke
+            -dohvaćanje PBKDF2 sažetaka i slučajnog 32 bajtnog podatka (salt) iz datoteke auth.bin
+            -uz pomoć proslijeđene lozinke i dohvaćenog 32 bajtnog podatka (salt) generiranje PBKDF2 sažetaka koji se uspoređuje sa dohvaćenim sažetkom. Ako su sažetci jednaki, korisnik je autentificiran, a ako nisu ispisuje se prikladna poruka.
+        -dohvaćanje kriptiranih lozinki (ciphertext), inicijalizacijskog vektora (iv), 32 bajtnog slučajnog podatka (salt) i podataka za autentičnost lozinki (tag) s datoteka pohranjenih na disku
+        -generiranje PBKDF2 ključa sa specificiranom lozinkom, dohvaćenim 16 bajtnim slučajnim podatkom (salt)
+        -provjera integriteta kriptiranog teksta pomoću dohvaćenog podataka za integritet lozinki (tag)
+            -ako je sigurnost podataka kompromitirana, ispisuje se prikladna poruka
+        -dekriptiranje lozinki geneiranim ključem i dohvaćenim inicijalizacijskim vektorom
+        -dodavanje ili mijenjanje lozinke
+        -generiranje novog inicijalizacijskog vektora i slučajnog 32 bajtnog podatka (salt)
+        -generiranje novog ključa pomoću PBKDF2 koristeći lozinku i novogenerirane podatke
+        -kriptiranje lozinki
+        -dohvaćanje podatka za provjeru integriteta (tag)
+        -pospremanje kriptiranih lozinki u datoteku passwords.bin
+        -pospremanje javnih podataka lozinki u public.bin
+
+    -zastavica get
+        -slično kao zastavica put, bez mijenjanja lozinki
+
+Korišteni alati:
+    -generiranje sažetka - PBKDF2 funkcija za generiranje ključa duljine 32 bajta (256 bit-a)
+    -kriptiranje - AES (GCM mode)
+
+Osigurana povjerljivost i integritet
+    -povjerljivost je osigurana enkripcijom podataka generiranim ključem pomoću sigurne PBKDF2 funkcije za derivaciju ključa
+    -integritet je osiguran pomoću MAC (message authentication code) podatka
+    -iako su neki podaci (tag, iv, salt) javni, to ne omogućuje napadaču da naruši integritet podataka
